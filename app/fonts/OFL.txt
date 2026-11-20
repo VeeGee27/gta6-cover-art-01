@@ -1,3 +1,9 @@
+<!--
+  Font note: this file is the SIL Open Font License for Anton, the display
+  font this entry ships under app/fonts/. The app loads Anton from that
+  folder only, never from the network, and no other font is bundled.
+  The license text below is unchanged.
+-->
 Copyright 2020 The Anton Project Authors (https://github.com/googlefonts/AntonFont.git)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
