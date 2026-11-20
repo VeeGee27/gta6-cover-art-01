@@ -1,6 +1,7 @@
-// Draws the cover: a multi-panel poster with a sunset/neon colour grade, a white
-// frame, and bold Anton caption lettering. Everything is drawn on one canvas, so
-// the preview and the exported PNG are the same picture at different sizes.
+// Draws the cover: a multi-panel poster with a sunset/neon colour grade, a poster
+// frame (white, gold or neon), and bold caption lettering in a flat, Chrome 3D or
+// outline style. Everything is drawn on one canvas, so the preview and the
+// exported PNG are the same picture at different sizes.
 
 // Layouts: panels in unit coordinates of the cover, and the caption band below
 // them. A layout with `band: null` puts its title over the art instead, in
@@ -80,6 +81,35 @@ export const LAYOUTS = {
     band: null,
     captionZone: { x: 0, y: 0.74, w: 1, h: 0.26 },
   },
+  comic: {
+    label: "Slashed Comic",
+    gapless: true,
+    panels: [
+      { x: 0, y: 0, w: 0.4, h: 1, slant: 0.16 },
+      { x: 0.30, y: 0, w: 0.4, h: 1, slant: 0.16 },
+      { x: 0.60, y: 0, w: 0.4, h: 1, slant: 0.16 },
+    ],
+    band: null,
+    captionZone: { x: 0, y: 0.66, w: 1, h: 0.34 },
+  },
+  cast: {
+    label: "Cast Grid",
+    panels: [
+      { x: 0, y: 0, w: 1, h: 0.46 },
+      { x: 0, y: 0.46, w: 0.25, h: 0.36 }, { x: 0.25, y: 0.46, w: 0.25, h: 0.36 },
+      { x: 0.5, y: 0.46, w: 0.25, h: 0.36 }, { x: 0.75, y: 0.46, w: 0.25, h: 0.36 },
+    ],
+    band: { x: 0, y: 0.82, w: 1, h: 0.18 },
+  },
+  strips: {
+    label: "Three Strips",
+    panels: [
+      { x: 0, y: 0, w: 1, h: 0.27 },
+      { x: 0, y: 0.27, w: 1, h: 0.28 },
+      { x: 0, y: 0.55, w: 1, h: 0.27 },
+    ],
+    band: { x: 0, y: 0.82, w: 1, h: 0.18 },
+  },
 };
 
 // Colour grades: a wash over each panel, strongest at the bottom.
@@ -102,6 +132,18 @@ export const GRADES = {
     top: "rgba(90,30,140,0.20)", bottom: "rgba(255,80,140,0.30)",
     tint: "rgba(255,110,160,0.08)",
   },
+  gold: {
+    label: "Vice Gold",
+    swatch: "linear-gradient(135deg,#ffe9a3,#ffb347 45%,#b8860b)",
+    top: "rgba(255,190,80,0.08)", bottom: "rgba(160,90,10,0.32)",
+    tint: "rgba(255,180,60,0.10)",
+  },
+  vice: {
+    label: "Vice Teal",
+    swatch: "linear-gradient(135deg,#2ee6c8,#ff2e88 55%,#7a2bff)",
+    top: "rgba(40,220,200,0.14)", bottom: "rgba(255,40,160,0.28)",
+    tint: "rgba(40,200,220,0.08)",
+  },
   none: {
     label: "No grade",
     swatch: "linear-gradient(135deg,#888,#444)",
@@ -116,6 +158,20 @@ export const INKS = [
   { label: "Neon cyan", value: "#3ec6ff" },
   { label: "Hot pink", value: "#ff7ab8" },
 ];
+
+// Poster frames: the border around the whole cover.
+export const FRAMES = {
+  white: { label: "White frame", kind: "solid", fill: "#f6f1e7" },
+  gold: { label: "Gold frame", kind: "gold" },
+  neon: { label: "Neon frame", kind: "neon" },
+};
+
+// Caption lettering styles: flat poster type, striped retro-chrome 3D, or hollow outline.
+export const TITLE_STYLES = {
+  flat: { label: "Flat" },
+  chrome: { label: "Chrome 3D" },
+  outline: { label: "Outline" },
+};
 
 /** Seeded random, so the grain is identical on every render of the same cover. */
 function seededRandom(seed) {
@@ -195,6 +251,54 @@ function gradePanel(ctx, grade, rx, ry, rw, rh, slantPx) {
   ctx.fillRect(rx - Math.abs(slantPx || 0), ry, rw + 2 * Math.abs(slantPx || 0), rh);
   ctx.restore();
 }
+/** Draws one caption line in the chosen title style: flat poster type, striped
+ * retro-chrome 3D (extruded layers + a banded gradient fill), or hollow outline. */
+function drawCaptionLine(ctx, line, cx, top, size, ink, style) {
+  ctx.font = `${size}px Anton, "Arial Narrow", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.lineJoin = "round";
+  if (style === "chrome") {
+    // Extrusion: the same line stepped down-right in darkening shades.
+    const steps = [0.10, 0.07, 0.045];
+    const shades = ["#3a0d2e", "#5c1445", "#7d1c5c"];
+    steps.forEach((off, i) => {
+      ctx.fillStyle = shades[i];
+      ctx.fillText(line, cx + size * off, top + size * off);
+    });
+    // Striped retro-chrome fill: alternating gold, white and pink bands.
+    const grad = ctx.createLinearGradient(0, top - size * 0.8, 0, top + size * 0.2);
+    grad.addColorStop(0, "#fff3b0");
+    grad.addColorStop(0.28, "#ffd23e");
+    grad.addColorStop(0.42, "#ffffff");
+    grad.addColorStop(0.58, "#ff7ab8");
+    grad.addColorStop(0.78, "#ffd23e");
+    grad.addColorStop(1, "#ff9d00");
+    ctx.fillStyle = grad;
+    ctx.fillText(line, cx, top);
+    ctx.lineWidth = Math.max(2, size * 0.05);
+    ctx.strokeStyle = "#1c0b26";
+    ctx.strokeText(line, cx, top);
+  } else if (style === "outline") {
+    ctx.fillStyle = "rgba(255,255,255,0.14)";
+    ctx.fillText(line, cx, top);
+    ctx.lineWidth = Math.max(2, size * 0.09);
+    ctx.strokeStyle = ink;
+    ctx.strokeText(line, cx, top);
+    ctx.lineWidth = Math.max(1, size * 0.03);
+    ctx.strokeStyle = "#1c0b26";
+    ctx.strokeText(line, cx, top);
+  } else {
+    ctx.fillStyle = "rgba(255,46,136,0.85)";
+    ctx.fillText(line, cx + size * 0.045, top + size * 0.045);
+    ctx.lineWidth = Math.max(2, size * 0.11);
+    ctx.strokeStyle = "#1c0b26";
+    ctx.strokeText(line, cx, top);
+    ctx.fillStyle = ink;
+    ctx.fillText(line, cx, top);
+  }
+}
+
 /** Splits a caption into at most two lines that fit `maxWidth`. */
 function wrapCaption(ctx, text, maxWidth) {
   const words = text.split(/\s+/).filter(Boolean);
@@ -214,16 +318,18 @@ function wrapCaption(ctx, text, maxWidth) {
 }
 
 /** Draws the caption stack into a zone: stars + quote, the big caption,
- * a gold rule with the sub-caption, and tag chips. Shrinks until it fits. */
+ * a gold rule with the sub-caption, tag chips, and the billing block.
+ * Shrinks until it fits. */
 function drawLettering(ctx, state, bx, by, bw, bh) {
   const text = (state.caption || "").trim().toUpperCase();
   const sub = (state.subcaption || "").trim().toUpperCase();
   const extras = state.extras || {};
   const quote = extras.starsOn ? (extras.quote || "").trim() : "";
   const tags = extras.tagsOn ? (extras.tags || "").split(/[·,]/).map((t) => t.trim().toUpperCase()).filter(Boolean) : [];
+  const billing = extras.billingOn ? (extras.billing || "").trim().toUpperCase() : "";
   const pad = bw * 0.035;
   const maxWidth = bw - pad * 2;
-  if (!text && !quote && tags.length === 0) return;
+  if (!text && !quote && tags.length === 0 && !billing) return;
 
   // Fit: shrink the caption until the whole stack fits the zone height.
   let size = bh * 0.46 * (state.captionScale / 100);
@@ -234,7 +340,8 @@ function drawLettering(ctx, state, bx, by, bw, bh) {
     const quoteH = quote ? s * 0.60 : 0;
     const subH = sub ? s * 0.20 + s * 0.34 : 0;
     const tagsH = tags.length ? s * 0.46 : 0;
-    return { lines, total: quoteH + lines.length * lineHeight + subH + tagsH, lineHeight };
+    const billingH = billing ? s * 0.30 : 0;
+    return { lines, total: quoteH + lines.length * lineHeight + subH + tagsH + billingH, lineHeight };
   };
   let m = measure(size);
   while ((m.total > bh * 0.97 || m.lines.length > 2) && size > 14) {
@@ -263,16 +370,7 @@ function drawLettering(ctx, state, bx, by, bw, bh) {
   }
 
   for (const line of lines) {
-    const top = y + size * 0.82;
-    ctx.font = `${size}px Anton, "Arial Narrow", sans-serif`;
-    ctx.fillStyle = "rgba(255,46,136,0.85)";
-    ctx.fillText(line, bx + bw / 2 + size * 0.045, top + size * 0.045);
-    ctx.lineWidth = Math.max(2, size * 0.11);
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#1c0b26";
-    ctx.strokeText(line, bx + bw / 2, top);
-    ctx.fillStyle = state.ink;
-    ctx.fillText(line, bx + bw / 2, top);
+    drawCaptionLine(ctx, line, bx + bw / 2, y + size * 0.82, size, state.ink, state.titleStyle || "flat");
     y += lineHeight;
   }
 
@@ -313,6 +411,21 @@ function drawLettering(ctx, state, bx, by, bw, bh) {
       ctx.fillText(t, tx + tw / 2, ty + tagSize * 1.45);
       tx += tw + gap;
     });
+  }
+
+  if (billing) {
+    // The tags sit in their own row; step past them before the billing line.
+    if (tags.length) y += size * 0.46;
+    const bSize = Math.max(9, size * 0.11);
+    ctx.font = `600 ${bSize}px system-ui, sans-serif`;
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    let bText = billing;
+    while (ctx.measureText(bText).width > maxWidth && bText.length > 10) {
+      bText = bText.slice(0, -1);
+    }
+    ctx.fillText(bText.length < billing.length ? `${bText}…` : bText, bx + bw / 2, y + bSize * 1.2);
   }
 }
 
@@ -368,9 +481,91 @@ function drawPill(ctx, text, x, y, h) {
   ctx.fillText(label, x + w / 2, y + h / 2 + 1);
 }
 
+/** A warm radial glow behind the title on key-art layouts: the "sky glow". */
+function drawSkyGlow(ctx, zx, zy, zw, zh) {
+  const cx = zx + zw / 2;
+  const cy = zy + zh * 0.45;
+  const r = Math.max(zw, zh) * 0.62;
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  glow.addColorStop(0, "rgba(255,150,70,0.42)");
+  glow.addColorStop(0.55, "rgba(255,90,120,0.18)");
+  glow.addColorStop(1, "rgba(255,90,120,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(zx - zw * 0.2, zy - zh * 0.4, zw * 1.4, zh * 1.4);
+}
+
+/** Role tags: a small cast chip at the foot of each panel, e.g. "THE DRIVER". */
+function drawRoleTags(ctx, state, panelsPx, gap) {
+  const roles = (state.extras?.roles || "").split(/[·,]/).map((t) => t.trim().toUpperCase()).filter(Boolean);
+  if (!roles.length) return;
+  panelsPx.forEach((rect, i) => {
+    const role = roles[i];
+    if (!role) return;
+    const h = Math.max(16, rect.h * 0.062);
+    const size = h * 0.52;
+    ctx.font = `700 ${size}px system-ui, sans-serif`;
+    const w = ctx.measureText(role).width + h * 1.2;
+    const x = rect.x + gap / 2 + rect.w * 0.03;
+    const y = rect.y + rect.h - gap / 2 - h - rect.h * 0.03;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, h * 0.28);
+    ctx.fillStyle = "rgba(22,10,32,0.78)";
+    ctx.fill();
+    ctx.strokeStyle = "#ffd23e";
+    ctx.lineWidth = Math.max(1, h * 0.06);
+    ctx.stroke();
+    ctx.fillStyle = "#ffd23e";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(role, x + h * 0.6, y + h / 2 + 1);
+  });
+}
+
+/** A callout: a dot on a panel with a leader line to a label chip above it. */
+function drawCallout(ctx, state, panelsPx) {
+  const extras = state.extras || {};
+  const label = (extras.callout || "").trim().toUpperCase();
+  if (!label) return;
+  const rect = panelsPx[extras.calloutPanel ?? 0] || panelsPx[0];
+  if (!rect) return;
+  const dotX = rect.x + rect.w * 0.68;
+  const dotY = rect.y + rect.h * 0.32;
+  const size = Math.max(13, rect.w * 0.028);
+  ctx.font = `700 ${size}px system-ui, sans-serif`;
+  const chipW = ctx.measureText(label).width + size * 2.4;
+  const chipH = size * 2.1;
+  const chipX = Math.min(Math.max(dotX - chipW / 2, 8), ctx.canvas.width - chipW - 8);
+  let chipY = dotY - chipH - size * 1.6;
+  if (chipY < 8) chipY = dotY + size * 1.6;
+  ctx.beginPath();
+  ctx.moveTo(dotX, dotY);
+  ctx.lineTo(chipX + chipW / 2, chipY + (chipY < dotY ? chipH : 0));
+  ctx.strokeStyle = "#ffd23e";
+  ctx.lineWidth = Math.max(2, size * 0.12);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, Math.max(4, size * 0.28), 0, Math.PI * 2);
+  ctx.fillStyle = "#ffd23e";
+  ctx.fill();
+  ctx.lineWidth = Math.max(2, size * 0.1);
+  ctx.strokeStyle = "#1c0b26";
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(chipX, chipY, chipW, chipH, chipH * 0.3);
+  ctx.fillStyle = "rgba(22,10,32,0.88)";
+  ctx.fill();
+  ctx.strokeStyle = "#ffd23e";
+  ctx.lineWidth = Math.max(1, size * 0.08);
+  ctx.stroke();
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, chipX + chipW / 2, chipY + chipH / 2 + 1);
+}
+
 /**
  * Draws the whole cover onto `canvas` at its own size.
- * `state`: { layout, grade, photos, assignments, caption, subcaption, ink,
+ * `state`: { layout, grade, frame, titleStyle, photos, assignments, caption, subcaption, ink,
  *   captionScale, selectedPanel, extras }.
  * Returns the panel rectangles in canvas pixels, for hit-testing.
  */
@@ -384,9 +579,28 @@ export function drawCover(canvas, state) {
   const frame = Math.round(w * 0.012);
   const gap = layout.gapless ? 0 : Math.max(2, Math.round(w * 0.007));
 
-  // White poster frame.
-  ctx.fillStyle = "#f6f1e7";
-  ctx.fillRect(0, 0, w, h);
+  // Poster frame: white, twilight gold, or neon keylines.
+  const frameStyle = FRAMES[state.frame] ?? FRAMES.white;
+  if (frameStyle.kind === "gold") {
+    const gold = ctx.createLinearGradient(0, 0, w, h);
+    gold.addColorStop(0, "#8a6a2f");
+    gold.addColorStop(0.5, "#ffd23e");
+    gold.addColorStop(1, "#9a7418");
+    ctx.fillStyle = gold;
+    ctx.fillRect(0, 0, w, h);
+  } else if (frameStyle.kind === "neon") {
+    ctx.fillStyle = "#0d0912";
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "#ff2e88";
+    ctx.lineWidth = Math.max(3, w * 0.006);
+    ctx.strokeRect(frame * 0.5, frame * 0.5, w - frame, h - frame);
+    ctx.strokeStyle = "#3ec6ff";
+    ctx.lineWidth = Math.max(2, w * 0.003);
+    ctx.strokeRect(frame * 1.1, frame * 1.1, w - frame * 2.2, h - frame * 2.2);
+  } else {
+    ctx.fillStyle = "#f6f1e7";
+    ctx.fillRect(0, 0, w, h);
+  }
   const ix = frame;
   const iy = frame;
   const iw = w - frame * 2;
@@ -437,6 +651,10 @@ export function drawCover(canvas, state) {
     }
   });
 
+  // Cast role tags at the foot of each panel — only where the panels end
+  // above the caption, never under the title on key-art layouts.
+  if (extras.rolesOn && layout.band) drawRoleTags(ctx, state, panelsPx, gap);
+
   // Caption band, or a scrim over the art with the title on top.
   if (layout.band) {
     const bx = ix + layout.band.x * iw;
@@ -457,6 +675,7 @@ export function drawCover(canvas, state) {
     scrim.addColorStop(1, "rgba(22,10,32,0.85)");
     ctx.fillStyle = scrim;
     ctx.fillRect(ix, zy - zh * 0.4, iw, zh * 1.4);
+    drawSkyGlow(ctx, zx, zy, zw, zh);
     drawLettering(ctx, state, zx, zy, zw, zh);
   }
 
@@ -467,6 +686,9 @@ export function drawCover(canvas, state) {
   if (extras.pillOn) {
     drawPill(ctx, extras.pill, ix + w * 0.02, iy + w * 0.02, h * 0.042);
   }
+
+  // Callout label pointing at a panel.
+  if (extras.calloutOn) drawCallout(ctx, state, panelsPx);
 
   // Film grain over everything, faint and deterministic.
   ctx.save();

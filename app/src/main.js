@@ -1,8 +1,9 @@
-// Wires the page: photo slots, layout and grade pickers, caption fields, a live
-// preview canvas you can drag and scroll to crop each photo, and PNG export in
-// 1080 x 1080, 1080 x 1350 and 1920 x 1080. `?demo=1` loads the bundled sample
-// photos; `?shot=` sets up a fixed scene for a screenshot (see shots.js).
-import { drawCover, LAYOUTS, GRADES, INKS } from "./cover.js";
+// Wires the page: photo slots, layout, grade, frame and title-style pickers,
+// caption fields, a live preview canvas you can drag and scroll to crop each
+// photo, and PNG export in 1080 x 1080, 1080 x 1350 and 1920 x 1080.
+// `?demo=1` loads the bundled sample photos; `?shot=` sets up a fixed scene
+// for a screenshot (see shots.js).
+import { drawCover, LAYOUTS, GRADES, INKS, FRAMES, TITLE_STYLES } from "./cover.js";
 import { runShot, DEMO_PHOTOS } from "./shots.js";
 
 const canvas = document.getElementById("cover");
@@ -17,6 +18,8 @@ const slotsEl = document.getElementById("slots");
 export const state = {
   layout: "hero",
   grade: "sunset",
+  frame: "white",
+  titleStyle: "chrome",
   photos: [], // { img, scale, ox, oy, name }
   assignments: [0, 1, 2, 3, 0, 1], // one per panel; six-panel layouts use all six
   caption: "SUNSET HEIST",
@@ -29,6 +32,9 @@ export const state = {
     pillOn: false, pill: "GOLDEN HOUR",
     starsOn: false, quote: "The city never looked this good",
     tagsOn: false, tags: "SUNSET · NEON · LEONIDA",
+    billingOn: true, billing: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY",
+    calloutOn: false, callout: "THE GETAWAY", calloutPanel: 0,
+    rolesOn: false, roles: "THE DRIVER · THE LOOKOUT · THE FIXER · THE WHEELMAN",
   },
 };
 
@@ -37,6 +43,7 @@ let fontsReady = false;
 
 export function redraw() {
   panelsPx = drawCover(canvas, state);
+  syncPanelCrop();
 }
 
 /** Loads an image from a URL, resolving once it can be drawn. */
@@ -223,6 +230,38 @@ function buildPickers() {
     });
     inkRow.appendChild(btn);
   }
+  const frameRow = document.getElementById("frameRow");
+  for (const [key, frame] of Object.entries(FRAMES)) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pick";
+    btn.textContent = frame.label;
+    btn.dataset.frame = key;
+    btn.setAttribute("aria-pressed", String(state.frame === key));
+    btn.addEventListener("click", () => {
+      state.frame = key;
+      frameRow.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", "false"));
+      btn.setAttribute("aria-pressed", "true");
+      redraw();
+    });
+    frameRow.appendChild(btn);
+  }
+  const titleRow = document.getElementById("titleRow");
+  for (const [key, style] of Object.entries(TITLE_STYLES)) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pick";
+    btn.textContent = style.label;
+    btn.dataset.titleStyle = key;
+    btn.setAttribute("aria-pressed", String(state.titleStyle === key));
+    btn.addEventListener("click", () => {
+      state.titleStyle = key;
+      titleRow.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", "false"));
+      btn.setAttribute("aria-pressed", "true");
+      redraw();
+    });
+    titleRow.appendChild(btn);
+  }
 }
 /** Maps a pointer event to canvas pixels and the panel under it (topmost wins). */
 function panelAt(clientX, clientY) {
@@ -304,6 +343,8 @@ const SURPRISE_CAPTIONS = [
   ["MIDNIGHT DRIVE", "THE CITY NEVER SLEEPS"],
   ["SUNSET HEIST", "IN AND OUT BEFORE DARK"],
   ["AFTERGLOW", "EVERY LIGHT TELLS A STORY"],
+  ["VICE CITY", "WELCOME TO LEONIDA"],
+  ["LAST LIGHT", "EVERY SUNSET HAS A PRICE"],
 ];
 
 function syncExtrasUI() {
@@ -316,6 +357,23 @@ function syncExtrasUI() {
   document.getElementById("quoteText").value = e.quote;
   document.getElementById("tagsOn").checked = e.tagsOn;
   document.getElementById("tagsText").value = e.tags;
+  document.getElementById("billingOn").checked = e.billingOn;
+  document.getElementById("billingText").value = e.billing;
+  document.getElementById("calloutOn").checked = e.calloutOn;
+  document.getElementById("calloutText").value = e.callout;
+  document.getElementById("rolesOn").checked = e.rolesOn;
+  document.getElementById("rolesText").value = e.roles;
+  syncPanelCrop();
+}
+
+/** The selected panel's crop controls: a zoom slider and a re-centre button. */
+function syncPanelCrop() {
+  const label = document.getElementById("panelLabel");
+  const zoom = document.getElementById("panelZoom");
+  const photo = state.photos[state.assignments[state.selectedPanel]];
+  label.textContent = `Panel ${state.selectedPanel + 1}`;
+  zoom.disabled = !photo;
+  zoom.value = String(Math.round((photo ? photo.scale : 1) * 100));
 }
 
 /** Sets every picker button's pressed state from the current state. */
@@ -329,15 +387,25 @@ function syncPickers() {
   document.querySelectorAll("#inkRow button").forEach((b) => {
     b.setAttribute("aria-pressed", String(state.ink === b.dataset.ink));
   });
+  document.querySelectorAll("#frameRow button").forEach((b) => {
+    b.setAttribute("aria-pressed", String(state.frame === b.dataset.frame));
+  });
+  document.querySelectorAll("#titleRow button").forEach((b) => {
+    b.setAttribute("aria-pressed", String(state.titleStyle === b.dataset.titleStyle));
+  });
 }
 
-/** Picks a random layout, grade, photo order, ink and caption. */
+/** Picks a random layout, grade, frame, title style, photo order, ink and caption. */
 export function surpriseMe() {
   const layouts = Object.keys(LAYOUTS);
   const grades = Object.keys(GRADES);
+  const frames = Object.keys(FRAMES);
+  const titleStyles = Object.keys(TITLE_STYLES);
   const inks = INKS.map((i) => i.value);
   state.layout = layouts[Math.floor(Math.random() * layouts.length)];
   state.grade = grades[Math.floor(Math.random() * grades.length)];
+  state.frame = frames[Math.floor(Math.random() * frames.length)];
+  state.titleStyle = titleStyles[Math.floor(Math.random() * titleStyles.length)];
   state.ink = inks[Math.floor(Math.random() * inks.length)];
   const [cap, sub] = SURPRISE_CAPTIONS[Math.floor(Math.random() * SURPRISE_CAPTIONS.length)];
   state.caption = cap;
@@ -348,6 +416,9 @@ export function surpriseMe() {
   state.extras.pillOn = Math.random() < 0.4;
   state.extras.starsOn = Math.random() < 0.5;
   state.extras.tagsOn = Math.random() < 0.5;
+  state.extras.billingOn = Math.random() < 0.6;
+  state.extras.calloutOn = Math.random() < 0.3;
+  state.extras.rolesOn = Math.random() < 0.5;
   captionInput.value = cap;
   subcaptionInput.value = sub;
   syncPickers();
@@ -404,6 +475,9 @@ function wireControls() {
     ["pillOn", "pillText", "pill", "pillOn"],
     ["starsOn", "quoteText", "quote", "starsOn"],
     ["tagsOn", "tagsText", "tags", "tagsOn"],
+    ["billingOn", "billingText", "billing", "billingOn"],
+    ["calloutOn", "calloutText", "callout", "calloutOn"],
+    ["rolesOn", "rolesText", "roles", "rolesOn"],
   ];
   for (const [checkId, textId, key, flag] of extraPairs) {
     document.getElementById(checkId).addEventListener("change", (e) => {
@@ -415,6 +489,21 @@ function wireControls() {
       redraw();
     });
   }
+  document.getElementById("panelZoom").addEventListener("input", (e) => {
+    const photo = state.photos[state.assignments[state.selectedPanel]];
+    if (!photo) return;
+    photo.scale = Number(e.target.value) / 100;
+    redraw();
+  });
+  document.getElementById("panelCenter").addEventListener("click", () => {
+    const photo = state.photos[state.assignments[state.selectedPanel]];
+    if (!photo) return;
+    photo.scale = 1;
+    photo.ox = 0;
+    photo.oy = 0;
+    redraw();
+    statusEl.textContent = `Panel ${state.selectedPanel + 1} re-centred.`;
+  });
 }
 
 /** Loads the bundled sample photos (AI-made demo art, free to use). */
@@ -444,10 +533,11 @@ async function boot() {
         addPhoto(img, url.split("/").pop());
       }
       // patch.photos is the URL list already loaded above — never assign it
-      // over the photo objects.
-      const { photos: _loaded, ...rest } = patch;
+      // over the photo objects. Extras merge over the defaults, so a scene
+      // that only flips a flag never silently drops the other extras' text.
+      const { photos: _loaded, extras: patchExtras, ...rest } = patch;
       Object.assign(state, rest);
-      if (patch.extras) Object.assign(state.extras, patch.extras);
+      if (patchExtras) Object.assign(state.extras, patchExtras);
       if (patch.exportSize) {
         const [w, h] = patch.exportSize.split("x").map(Number);
         canvas.width = w;

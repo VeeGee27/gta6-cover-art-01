@@ -2,10 +2,14 @@
 // ?shot=cover shows the exported cover alone, full-bleed. The query picks the
 // layout, grade, photos and caption. window.__shotReady is set once painted.
 
-/** The bundled sample photos (kit samples plus AI-made demo art). */
+/** The bundled sample photos: four AI-made Vice City illustrations first, then
+ * the kit's own photos. The demo loader takes the first four, so a fresh
+ * cover is all illustration — one coherent poster, not a mixed collage. */
 export const DEMO_PHOTOS = [
   "samples/demo-neon.jpg",
   "samples/demo-palm.jpg",
+  "samples/demo-street.jpg",
+  "samples/demo-skyline.jpg",
   "samples/pier.jpg",
   "samples/boulevard.jpg",
 ];
@@ -13,40 +17,46 @@ export const DEMO_PHOTOS = [
 const SCENES = {
   editor: {
     layout: "hero",
-    grade: "sunset",
+    grade: "gold",
+    frame: "gold",
+    titleStyle: "chrome",
     photos: DEMO_PHOTOS,
     assignments: [0, 1, 2, 3, 0, 1],
     caption: "SUNSET HEIST",
     subcaption: "A NEON CITY STORY",
     ink: "#ffffff",
     captionScale: 100,
-    extras: { sealOn: true, seal: "NEW", pillOn: true, pill: "GOLDEN HOUR", starsOn: false, tagsOn: false },
+    extras: { sealOn: true, seal: "NEW", pillOn: true, pill: "GOLDEN HOUR", starsOn: false, tagsOn: false, billingOn: true, billing: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY", rolesOn: true, roles: "THE DRIVER · THE LOOKOUT · THE FIXER · THE WHEELMAN", calloutOn: false },
     exportSize: "1920x1080",
   },
   cover: {
-    layout: "slash",
+    layout: "keyart",
     grade: "sunset",
+    frame: "gold",
+    titleStyle: "chrome",
     photos: DEMO_PHOTOS,
-    assignments: [0, 1, 2],
+    assignments: [1],
     caption: "NEON NIGHTS",
     subcaption: "A NEON CITY STORY",
     ink: "#ffffff",
     captionScale: 100,
     selectedPanel: -1,
-    extras: { sealOn: true, seal: "NEW", pillOn: false, starsOn: true, quote: "The city never looked this good", tagsOn: true, tags: "SUNSET · NEON · LEONIDA" },
+    extras: { sealOn: true, seal: "NEW", pillOn: false, starsOn: true, quote: "The city never looked this good", tagsOn: true, tags: "SUNSET · NEON · LEONIDA", billingOn: true, billing: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY", rolesOn: false, calloutOn: true, callout: "THE GETAWAY", calloutPanel: 0 },
     exportSize: "1920x1080",
   },
   wide: {
-    layout: "quad",
-    grade: "neon",
+    layout: "slash",
+    grade: "vice",
+    frame: "neon",
+    titleStyle: "chrome",
     photos: DEMO_PHOTOS,
-    assignments: [2, 3, 0, 1],
+    assignments: [2, 3, 0],
     caption: "PALM DUSK",
     subcaption: "FOUR PANELS · ONE NIGHT",
     ink: "#ffd23e",
     captionScale: 100,
     selectedPanel: -1,
-    extras: { sealOn: false, pillOn: true, pill: "AFTER DARK", starsOn: true, quote: "Every light tells a story", tagsOn: true, tags: "PALMS · NEON · NIGHT" },
+    extras: { sealOn: false, pillOn: true, pill: "AFTER DARK", starsOn: true, quote: "Every light tells a story", tagsOn: true, tags: "PALMS · NEON · NIGHT", billingOn: true, billing: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY", rolesOn: false, calloutOn: false },
     exportSize: "1080x1350",
   },
 };
@@ -55,7 +65,7 @@ export async function runShot(query, load) {
   const name = query.get("shot") || "editor";
   const scene = { ...(SCENES[name] ?? SCENES.editor) };
   // Query overrides, so one scene can serve several screenshots.
-  for (const key of ["layout", "grade", "caption", "subcaption", "ink", "exportSize"]) {
+  for (const key of ["layout", "grade", "frame", "titleStyle", "caption", "subcaption", "ink", "exportSize"]) {
     if (query.get(key)) scene[key] = query.get(key);
   }
   if (query.get("captionScale")) scene.captionScale = Number(query.get("captionScale"));
