@@ -1,11 +1,12 @@
-// Magic Hour Cover Studio, a gta6-cover-art-01 entry (Node 22, standard library
+// Magic Hour Cover Studio v2, a gta6-cover-art-01 entry (Node 22, standard library
 // only): the app is this directory's app/ folder, plain static files a desktop
 // browser loads offline — app/index.html, its ES modules, the Anton font and
 // the sample photos, no library and no network request. It turns a person's
 // own photos into a multi-panel GTA-style poster cover with a sunset or neon
-// grade and bold caption lettering, and exports it as a PNG in 1080 x 1080,
-// 1080 x 1350 or 1920 x 1080. The program hands the app in: it copies app/
-// and screenshots/ from beside this file to /output and writes
+// grade, Chrome 3D or outline caption lettering, a gold or neon poster frame,
+// cast role tags, callouts and a movie billing block, and exports it as a PNG
+// in 1080 x 1080, 1080 x 1350 or 1920 x 1080. The program hands the app in: it
+// copies app/ and screenshots/ from beside this file to /output and writes
 // /output/dossier.json, the summary the judge reads, with the vendored
 // make.fun library.
 //
