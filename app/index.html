@@ -12,7 +12,7 @@
   <section class="controls" id="controls">
     <header class="brand">
       <h1>Magic Hour Cover Studio</h1>
-      <p>Your photos, made into a GTA-style poster cover. Four steps: add photos, pick a layout, write the caption, export.</p>
+      <p>Your photos, made into a GTA-style poster cover. Four steps: add photos, pick a layout, write the caption, export. Now with 12 layouts, 6 grades, Chrome 3D titles, gold and neon frames, cast role tags, callouts and a movie billing block.</p>
     </header>
 
     <section class="step" aria-label="Step 1: photos">
@@ -25,12 +25,24 @@
         <button id="fillAll" type="button">Fill every panel with photo 1</button>
         <button id="demoBtn" type="button">Try the demo photos</button>
       </div>
+      <div class="crop-row">
+        <span id="panelLabel" class="crop-label">Panel 1</span>
+        <label class="crop-zoom">Zoom
+          <input id="panelZoom" type="range" min="100" max="250" value="100">
+        </label>
+        <button id="panelCenter" type="button">Re-centre</button>
+      </div>
+      <p class="hint">Tap a panel in the preview to crop that one.</p>
     </section>
 
     <section class="step" aria-label="Step 2: layout and grade">
       <h2><span class="step-no">2</span> Layout &amp; grade</h2>
       <div class="pick-row layouts" id="layoutRow" role="group" aria-label="Layout"></div>
       <div class="pick-row" id="gradeRow" role="group" aria-label="Colour grade"></div>
+      <p class="hint">Frame</p>
+      <div class="pick-row" id="frameRow" role="group" aria-label="Poster frame"></div>
+      <p class="hint">Title style</p>
+      <div class="pick-row" id="titleRow" role="group" aria-label="Title style"></div>
       <button id="surprise" type="button" class="wide">Surprise me — random layout, grade &amp; caption</button>
     </section>
 
@@ -67,6 +79,18 @@
       <div class="extra-row">
         <label class="check"><input id="tagsOn" type="checkbox"> Tags</label>
         <input id="tagsText" type="text" maxlength="48" value="SUNSET · NEON · LEONIDA" aria-label="Tags text">
+      </div>
+      <div class="extra-row">
+        <label class="check"><input id="billingOn" type="checkbox" checked> Billing block</label>
+        <input id="billingText" type="text" maxlength="90" value="A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY" aria-label="Billing block text">
+      </div>
+      <div class="extra-row">
+        <label class="check"><input id="calloutOn" type="checkbox"> Callout</label>
+        <input id="calloutText" type="text" maxlength="24" value="THE GETAWAY" aria-label="Callout text">
+      </div>
+      <div class="extra-row">
+        <label class="check"><input id="rolesOn" type="checkbox"> Role tags</label>
+        <input id="rolesText" type="text" maxlength="64" value="THE DRIVER · THE LOOKOUT · THE FIXER · THE WHEELMAN" aria-label="Role tags text">
       </div>
     </section>
 

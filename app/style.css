@@ -35,6 +35,10 @@ input[type=range] { width: 100%; accent-color: #ff2e88; }
 .slot .slot-zoom { position: absolute; left: 4px; right: 4px; bottom: 20px; width: calc(100% - 8px); accent-color: #ffd23e; }
 .slot-actions { display: flex; gap: 8px; margin-top: 10px; }
 .slot-actions button { flex: 1; }
+.crop-row { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+.crop-label { font-weight: 700; font-size: 13px; min-width: 52px; }
+.crop-zoom { flex: 1; display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 13px; margin: 0; }
+.crop-zoom input[type=range] { width: 100%; }
 
 button { font: inherit; font-weight: 700; padding: 9px 12px; border: 1px solid #6b5a7d; border-radius: 8px; background: #2e2140; color: #f4eef7; cursor: pointer; }
 button:hover { border-color: #ff2e88; }
