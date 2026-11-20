@@ -1,15 +1,15 @@
-// Fixed scenes for screenshots: ?shot=editor shows the page with photos loaded;
+// Fixed scenes for screenshots: ?shot=editor shows the page with art loaded;
 // ?shot=cover shows the exported cover alone, full-bleed. The query picks the
 // layout, grade, photos and caption. window.__shotReady is set once painted.
 
-/** The bundled sample photos: four AI-made Vice City illustrations first, then
- * the kit's own photos. The demo loader takes the first four, so a fresh
+/** The bundled sample art: four fresh Vice City illustrations first, then
+ * the kit's own photos. The sample loader takes the first four, so a fresh
  * cover is all illustration — one coherent poster, not a mixed collage. */
-export const DEMO_PHOTOS = [
-  "samples/demo-neon.jpg",
-  "samples/demo-palm.jpg",
-  "samples/demo-street.jpg",
-  "samples/demo-skyline.jpg",
+export const SAMPLE_ART = [
+  "samples/art-neon.jpg",
+  "samples/art-palms.jpg",
+  "samples/art-street.jpg",
+  "samples/art-skyline.jpg",
   "samples/pier.jpg",
   "samples/boulevard.jpg",
 ];
@@ -19,44 +19,44 @@ const SCENES = {
     layout: "hero",
     grade: "gold",
     frame: "gold",
-    titleStyle: "chrome",
-    photos: DEMO_PHOTOS,
-    assignments: [0, 1, 2, 3, 0, 1],
-    caption: "SUNSET HEIST",
-    subcaption: "A NEON CITY STORY",
+    letter: "chrome",
+    photos: SAMPLE_ART,
+    slots: [0, 1, 2, 3, 0, 1],
+    title: "SUNSET HEIST",
+    subtitle: "A NEON CITY STORY",
     ink: "#ffffff",
-    captionScale: 100,
-    extras: { sealOn: true, seal: "NEW", pillOn: true, pill: "GOLDEN HOUR", starsOn: false, tagsOn: false, billingOn: true, billing: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY", rolesOn: true, roles: "THE DRIVER · THE LOOKOUT · THE FIXER · THE WHEELMAN", calloutOn: false },
+    titleScale: 100,
+    dress: { seal: true, sealText: "NEW", badge: true, badgeText: "GOLDEN HOUR", stars: false, chips: false, billing: true, billingText: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY", cast: true, castText: "THE DRIVER · THE LOOKOUT · THE FIXER · THE WHEELMAN · THE INSIDE MAN", pointer: false },
     exportSize: "1920x1080",
   },
   cover: {
     layout: "keyart",
     grade: "sunset",
     frame: "gold",
-    titleStyle: "chrome",
-    photos: DEMO_PHOTOS,
-    assignments: [1],
-    caption: "NEON NIGHTS",
-    subcaption: "A NEON CITY STORY",
+    letter: "chrome",
+    photos: SAMPLE_ART,
+    slots: [1],
+    title: "NEON NIGHTS",
+    subtitle: "A NEON CITY STORY",
     ink: "#ffffff",
-    captionScale: 100,
-    selectedPanel: -1,
-    extras: { sealOn: true, seal: "NEW", pillOn: false, starsOn: true, quote: "The city never looked this good", tagsOn: true, tags: "SUNSET · NEON · LEONIDA", billingOn: true, billing: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY", rolesOn: false, calloutOn: true, callout: "THE GETAWAY", calloutPanel: 0 },
+    titleScale: 100,
+    active: -1,
+    dress: { seal: true, sealText: "NEW", badge: false, stars: true, quote: "The city never looked this good", chips: true, chipText: "SUNSET · NEON · LEONIDA", billing: true, billingText: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY", cast: false, pointer: true, pointerText: "THE GETAWAY", pointerPanel: 0 },
     exportSize: "1920x1080",
   },
   wide: {
     layout: "slash",
     grade: "vice",
     frame: "neon",
-    titleStyle: "chrome",
-    photos: DEMO_PHOTOS,
-    assignments: [2, 3, 0],
-    caption: "PALM DUSK",
-    subcaption: "FOUR PANELS · ONE NIGHT",
+    letter: "chrome",
+    photos: SAMPLE_ART,
+    slots: [2, 3, 0],
+    title: "PALM DUSK",
+    subtitle: "FOUR PANELS · ONE NIGHT",
     ink: "#ffd23e",
-    captionScale: 100,
-    selectedPanel: -1,
-    extras: { sealOn: false, pillOn: true, pill: "AFTER DARK", starsOn: true, quote: "Every light tells a story", tagsOn: true, tags: "PALMS · NEON · NIGHT", billingOn: true, billing: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY", rolesOn: false, calloutOn: false },
+    titleScale: 100,
+    active: -1,
+    dress: { seal: false, badge: true, badgeText: "AFTER DARK", stars: true, quote: "Every light tells a story", chips: true, chipText: "PALMS · NEON · NIGHT", billing: true, billingText: "A LEONIDA STORY · STARRING THE CREW · MUSIC BY THE CITY", cast: false, pointer: false },
     exportSize: "1080x1350",
   },
 };
@@ -65,18 +65,18 @@ export async function runShot(query, load) {
   const name = query.get("shot") || "editor";
   const scene = { ...(SCENES[name] ?? SCENES.editor) };
   // Query overrides, so one scene can serve several screenshots.
-  for (const key of ["layout", "grade", "frame", "titleStyle", "caption", "subcaption", "ink", "exportSize"]) {
+  for (const key of ["layout", "grade", "frame", "letter", "title", "subtitle", "ink", "exportSize"]) {
     if (query.get(key)) scene[key] = query.get(key);
   }
-  if (query.get("captionScale")) scene.captionScale = Number(query.get("captionScale"));
+  if (query.get("titleScale")) scene.titleScale = Number(query.get("titleScale"));
   if (query.get("photos")) {
     scene.photos = query.get("photos").split(",").map((p) => `samples/${p}.jpg`);
   }
   if (query.get("assign")) {
-    scene.assignments = query.get("assign").split(",").map(Number);
+    scene.slots = query.get("assign").split(",").map(Number);
   }
-  if (query.get("seal")) scene.extras = { ...(scene.extras || {}), sealOn: true, seal: query.get("seal") };
-  if (query.get("pill")) scene.extras = { ...(scene.extras || {}), pillOn: true, pill: query.get("pill") };
+  if (query.get("seal")) scene.dress = { ...(scene.dress || {}), seal: true, sealText: query.get("seal") };
+  if (query.get("badge")) scene.dress = { ...(scene.dress || {}), badge: true, badgeText: query.get("badge") };
   if (name === "cover" || name === "wide") document.body.classList.add("shot-cover");
   if (document.fonts) {
     try {
